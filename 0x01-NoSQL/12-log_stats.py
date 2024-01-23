@@ -21,5 +21,5 @@ if __name__ == "__main__":
     print(f'\tmethod POST: {post_count}')
     print(f'\tmethod PUT: {put_count}')
     print(f'\tmethod PATCH: {patch_count}')
-    print(f'\tmethod GET: {delete_count}')
+    print(f'\tmethod DELETE: {delete_count}')
     print(f'{status_count} status check')
