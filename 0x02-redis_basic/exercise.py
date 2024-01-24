@@ -19,7 +19,7 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable]):
+    def get(self, key: str, fn: Optional[Callable] = None):
         """"""
         value = self._redis.get(key)
         if not value:
@@ -29,10 +29,10 @@ class Cache:
         else:
             return value
 
-    def get_str(self, key: str) -> Callable:
+    def get_str(self, key: str) -> Optional[str]:
         """Converts the value to a string"""
-        return self.get(self, key, fn=lambda d: d.decode("utf-8"))
+        return self.get(key, fn=lambda d: d.decode("utf-8"))
 
-    def get_int(self, key) -> Callable:
+    def get_int(self, key: str) -> Optional[int]:
         """Converts the value to integer"""
-        return self.get(self, key, fn=int)
+        return self.get(key, fn=int)
