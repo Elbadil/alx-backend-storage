@@ -2,7 +2,26 @@
 """Defining a Class Cache"""
 import redis
 import uuid
-from typing import Union, Callable, Optional, Any
+from typing import Union, Callable, Optional
+from functools import wraps
+
+
+def count_calls(method: Callable) -> Callable:
+    """returns the wrapper function"""
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        """wrapper function"""
+        key = method.__qualname__
+        # Getting the current counter value from Redis
+        counter = self._redis.get(key)
+        if counter:
+            counter = int(counter) + 1
+        else:
+            counter = 1
+        # Setting the updated counter value in Redis
+        self._redis.set(key, counter)
+        return method(self, *args, **kwargs)
+    return wrapper
 
 
 class Cache:
@@ -12,6 +31,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """takes a data argument, sets it to a random key and
         returns the key"""
@@ -20,7 +40,7 @@ class Cache:
         return key
 
     def get(self, key: str, fn: Optional[Callable] = None):
-        """"""
+        """Reads from Redis and recovers original type"""
         value = self._redis.get(key)
         if not value:
             return None
@@ -30,9 +50,9 @@ class Cache:
             return value
 
     def get_str(self, key: str) -> Optional[str]:
-        """Converts the value to a string"""
+        """parametrize get method with string fn"""
         return self.get(key, fn=lambda d: d.decode("utf-8"))
 
     def get_int(self, key: str) -> Optional[int]:
-        """Converts the value to integer"""
+        """parametrize get method with integer fn"""
         return self.get(key, fn=int)
