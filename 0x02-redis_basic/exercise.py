@@ -7,10 +7,8 @@ from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
-    """returns the wrapper function"""
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        """wrapper function"""
         key = method.__qualname__
         # Getting the current counter value from Redis
         counter = self._redis.get(key)
