@@ -8,7 +8,7 @@ from functools import wraps
 
 def count_calls(method: Callable) -> Callable:
     @wraps(method)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, *args, **kwds):
         key = method.__qualname__
         # Getting the current counter value from Redis
         counter = self._redis.get(key)
@@ -18,7 +18,20 @@ def count_calls(method: Callable) -> Callable:
             counter = 1
         # Setting the updated counter value in Redis
         self._redis.set(key, counter)
-        return method(self, *args, **kwargs)
+        return method(self, *args, **kwds)
+    return wrapper
+
+
+def call_history(method: Callable) -> Callable:
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        key = method.__qualname__
+        inputs_list_key = key + ":inputs"
+        output_list_key = key + ":outputs"
+        self._redis.rpush(inputs_list_key, str(args))
+        key_arg = method(self, *args, **kwds)
+        self._redis.rpush(output_list_key, key_arg)
+        return key_arg
     return wrapper
 
 
@@ -29,6 +42,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """takes a data argument, sets it to a random key and
